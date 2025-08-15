@@ -1,11 +1,12 @@
+using Pkg
+Pkg.activate("/projects/emco4286/software/julia/ErcotProject")
+
 using PowerFlows
 include("file_pointers.jl")
 include("system_build_functions.jl")
 include("manual_data_entries.jl")
-include("system_build_functions.jl")
 
 configure_logging(file_level = Logging.Info, console_level = Logging.Info)
-
 
 sys = System(TAMU_matpower_file)
 add_bus_coords(sys, TAMU_shp_file)
@@ -35,6 +36,44 @@ get_ext(sys)["added_power"] = 0.0
 # end
 ####### Add new PV ####
 add_line!(sys, (500, "PANHANDLE 2 0", "FRYE_SOLAR 0", 112))
+
+# using Printf
+
+# new_arc = (500, "PANHANDLE 2 0", "FRYE_SOLAR 0", 112)
+# from_bus = get_component(Bus, sys, new_arc[2])
+# to_bus = get_component(Bus, sys, new_arc[3])
+
+# if isnothing(to_bus)
+#     # If from-bus does not exist, voltage_set_point = 1; else, voltage_set_point = get_magnitude(from_bus)
+#     voltage_set_point = isnothing(from_bus) ? 1.0 : get_magnitude(from_bus)
+#     @printf("To-bus voltage setpoint: %s", voltage_set_point)
+#     to_bus_data = [b for b in new_buses if b[2] == new_arc[3]][1]
+#     @printf("To-bus base voltage: %s", to_bus_data[1])
+#     end_bus_nums[to_bus_data[3]] = end_bus_nums[to_bus_data[3]] + 1 #add 1 to the last number
+#     # to_bus =
+#     #     make_new_bus(end_bus_nums[to_bus_data[3]], to_bus_data, voltage_set_point)
+#     # @info "adding a new bus $(get_name(to_bus)), $(get_number(to_bus))"
+#     # add_component!(sys, to_bus)
+# end
+
+# if isnothing(from_bus)
+#     voltage_set_point = isnothing(to_bus) ? 1.0 : get_magnitude(to_bus)
+#     @printf("From-bus voltage setpoint: %s", voltage_set_point)
+#     # new_buses defined in manual_data_entries.jl
+#     from_bus_data = [b for b in new_buses if b[2] == new_arc[2]][1]
+#     @printf("From-bus base voltage: %s", from_bus_data[1])
+#     # # end_bus_nums defined in manual_data_entries.jl
+#     # end_bus_nums[from_bus_data[3]] = end_bus_nums[from_bus_data[3]] + 1 #add 1 to the last number
+#     # from_bus = make_new_bus(
+#     #     end_bus_nums[from_bus_data[3]],
+#     #     from_bus_data,
+#     #     voltage_set_point,
+#     # )
+#     # @info "adding a new bus $(get_name(from_bus)), $(get_number(from_bus))"
+#     # add_component!(sys, from_bus)
+# end
+
+
 add_line!(sys, (500, "FRYE_SOLAR 0", "LAMESA 1", 161))
 add_transformer!(sys, (500, 161, "FRYE_SOLAR 0", "FRYE_SOLAR 1"))
 add_pv_plant!(sys, ("Frye Solar", "FRYE_SOLAR 0"))
@@ -45,8 +84,10 @@ add_line!(sys, (500, "DAWN_SOLAR 0", "FRYE_SOLAR 0", 68))
 add_line!(sys, (500, "FRYE_SOLAR 0", "ANDREWS 1", 240))
 add_line!(sys, (500, "PANHANDLE 2 0", "DAWN_SOLAR 0", 160))
 add_pv_plant!(sys, ("Dawn Solar", "DAWN_SOLAR 0"))
+
 # res = solve_powerflow(ACPowerFlow(), sys)
 # check_pf_results(res) && solve_ac_powerflow!(sys)
+
 add_line!(sys, (161, "SILVERTON 0", "CASTRO_SOLAR 0", 70))
 add_line!(sys, (161, "CASTRO_SOLAR 0", "NAZARETH_SOLAR 0", 7))
 add_line!(sys, (161, "NAZARETH_SOLAR 0", "FRYE_SOLAR 1", 8))
@@ -133,7 +174,9 @@ remove_component!(sys, line_dike[1])
 add_line!(sys, (230, "MOUNT PLEASANT 2 0", "HOPKINS 1", 15))
 add_line!(sys, (230, "HOPKINS 1", "MOUNT PLEASANT 1 1", 15))
 add_pv_plant!(sys, ("Hopkins", "HOPKINS 1"))
-remove_component!(sys, get_component(FixedAdmittance, sys, "12"))
+# THIS LINE FAILS
+# remove_component!(sys, get_component(FixedAdmittance, sys, "12"))
+
 #res = solve_powerflow(ACPowerFlow(), sys)
 #check_pf_results(res) ? solve_powerflow(ACPowerFlow(), sys) : @error("PowerFlow Failed")
 line_mount_vernon = collect(get_components(x -> get_from(get_arc(x)) == get_bus(sys, 8142)  && get_to(get_arc(x))== get_bus(sys, 8106), Line, sys))

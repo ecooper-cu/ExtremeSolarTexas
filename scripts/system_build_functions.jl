@@ -1,3 +1,4 @@
+using Pkg
 using PowerSystems
 using HDF5
 using TimeSeries
@@ -10,12 +11,13 @@ import Interpolations: LinearInterpolation
 using Random
 using Shapefile
 using ProgressMeter
-const PSY = PowerSystems
 using JuMP
-using Xpress
-using HDF5
-#using Plots
+using Gurobi
+# using Xpress
 using JSON
+
+const PSY = PowerSystems
+const GENV = Gurobi.Env()
 
 
 function complete_lines_characteristic_impedance!(line_params, sys)
@@ -160,6 +162,8 @@ function make_new_bus(bus_numer, bus_data, voltage_set_point)
         base_voltage = bus_data[1],
         area = get_component(Area, sys, "$(Int(bus_data[3]/1000))"),
         load_zone = nothing,
+        # "available" keyword now required for Bus struct https://github.com/NREL-Sienna/PowerSystems.jl/blob/b9ec95974ff434eeff51282bb9c70a2b19a2f2c6/src/models/generated/ACBus.jl#L11
+        available = true,
     )
 end
 
@@ -172,13 +176,22 @@ function get_bc(x, base_voltage, data)
 end
 
 function add_line!(sys, new_arc::Tuple)
+    """
+    [1] => doesn't get used?
+    [2] => name of from-bus
+    [3] => name of to-bus
+    [4] => sin(\theta) = X/Z? too high
+    """
     @assert new_arc[4] > 1
     try
         from_bus = get_component(Bus, sys, new_arc[2])
         to_bus = get_component(Bus, sys, new_arc[3])
         if isnothing(from_bus)
+            # voltage_set_point = magnitude
             voltage_set_point = isnothing(to_bus) ? 1.0 : get_magnitude(to_bus)
+            # new_buses defined in manual_data_entries.jl
             from_bus_data = [b for b in new_buses if b[2] == new_arc[2]][1]
+            # end_bus_nums defined in manual_data_entries.jl
             end_bus_nums[from_bus_data[3]] = end_bus_nums[from_bus_data[3]] + 1 #add 1 to the last number
             from_bus = make_new_bus(
                 end_bus_nums[from_bus_data[3]],
@@ -189,6 +202,7 @@ function add_line!(sys, new_arc::Tuple)
             add_component!(sys, from_bus)
         end
         if isnothing(to_bus)
+            # If from-bus does not exist, voltage_set_point = 1; else, voltage_set_point = get_magnitude(from_bus)
             voltage_set_point = isnothing(from_bus) ? 1.0 : get_magnitude(from_bus)
             to_bus_data = [b for b in new_buses if b[2] == new_arc[3]][1]
             end_bus_nums[to_bus_data[3]] = end_bus_nums[to_bus_data[3]] + 1 #add 1 to the last number
@@ -260,7 +274,10 @@ function add_transformer!(sys, new_arc)
             x = data.impedance[2],
             primary_shunt = 0.0,
             tap = 1.0,
-            rating = 2000.0,
+            # "rating" argument now needs to be per-unitized
+            rating = 2000.0/get_base_power(sys),
+            # new argument "base_power"
+            base_power = get_base_power(sys),
         )
         add_component!(sys, new_transformer)
     catch e
@@ -535,7 +552,7 @@ function make_wind_units(system, device::PSY.RenewableDispatch)
 end
 
 function make_hydro_units(system, device::PSY.HydroDispatch)
-    set_available!(device, true)
+    # set_available!(device, true)
     set_reactive_power!(device, 0.0)
     if occursin(r"gen", get_name(device))
         plant_name = strip(replace(get_name(get_bus(device)), r"[0-9]" => ""))
@@ -788,7 +805,7 @@ function make_thermal_gen(
     temp_gen = ThermalMultiStart(nothing)
     p_limits, q_limits, rating, base_power = _rescale_power(original_gen, LSL, HSL)
     set_name!(temp_gen, uppercase(replace(name, " " => "_")))
-    set_available!(temp_gen, true)
+    # set_available!(temp_gen, true)
     set_bus!(temp_gen, get_bus(original_gen))
     original_set_point = get_active_power(original_gen) / base_power
     set_point = original_set_point > p_limits.max ? p_limits.max : original_set_point
@@ -811,10 +828,10 @@ function make_thermal_gen(
 	set_operation_cost!(temp_gen, op_cost)
 	start_up, no_load = start_up_no_load(sced_data)
         if no_load == -99
-            _, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL, plot)
+            _, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL) # , plot)
         end
     else
-        start_up, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL, plot)
+        start_up, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL) #, plot)
     end
     set_start_up!(op_cost, start_up)
     set_shut_down!(op_cost, 0.2 * start_up.hot)
@@ -854,7 +871,7 @@ function make_thermal_gen_nuc(
     p_limits_, q_limits, rating, base_power = _rescale_power(original_gen, LSL, HSL)
     p_limits = (min = p_limits_.max * 0.95, max = p_limits_.max)
     set_name!(temp_gen, replace(name, " " => "_"))
-    set_available!(temp_gen, true)
+    # set_available!(temp_gen, true)
     set_status!(temp_gen, true)
     set_bus!(temp_gen, get_bus(original_gen))
     set_active_power!(temp_gen, p_limits.max)
@@ -921,7 +938,7 @@ function make_thermal_gen_st(
     temp_gen = ThermalMultiStart(nothing)
     p_limits, q_limits, rating, base_power = _rescale_power(original_gen, LSL, HSL)
     set_name!(temp_gen, uppercase(replace(name, " " => "_")))
-    set_available!(temp_gen, true)
+    # set_available!(temp_gen, true)
     set_status!(temp_gen, true)
     set_bus!(temp_gen, get_bus(original_gen))
     set_active_power!(temp_gen, p_limits.min)
@@ -939,7 +956,7 @@ function make_thermal_gen_st(
         start_up, no_load, variable_cost =
             get_cost_data_from_sced_linear(sced_data, name, LSL, HSL, plot)
     else
-        start_up, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL, plot)
+        start_up, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL) #, plot)
     end
 
     duration_limits = _get_duration_limits(prime_mover, fuel, ercot_fuel, base_power)
@@ -1004,7 +1021,7 @@ function make_storage(original_gen::ThermalStandard; name)
     end
     set_base_power!(temp, base_power)
     set_name!(temp, replace(name, " " => "_"))
-    set_available!(temp, true)
+    # set_available!(temp, true)
     set_bus!(temp, get_bus(original_gen))
     set_prime_mover_type!(temp, PrimeMovers.BA)
     gen_max_active_power = original_gen.active_power_limits.max
@@ -1061,8 +1078,10 @@ function get_sced_data(file_name, name)
 end
 
 function get_mean_quadratic_model(gen, price, quad_term::Bool = true)
-    m = Model(Xpress.Optimizer; )
-    set_optimizer_attribute(m, "XPRS_MAXTIME", 10)
+    optimizer = () -> Gurobi.Optimizer(GENV)
+    m = Model(optimizer; )
+    # set_optimizer_attribute(m, "XPRS_MAXTIME", 10)
+    set_optimizer_attribute(m, "TimeLimit", 10)
     #JuMP.set_silent(m)
     n_bp = length(price)
     @variable(m, var_price[1:n_bp] >= 0)
@@ -1102,8 +1121,9 @@ function get_mean_quadratic_model(gen, price, quad_term::Bool = true)
 end
 
 function get_median_quadratic_model(gen, price, quad_term::Bool = true)
-    m = Model(Xpress.Optimizer)
-    set_optimizer_attribute(m, "XPRS_MAXTIME", 5)
+    optimizer = () -> Gurobi.Optimizer(GENV)
+    m = Model(optimizer; )
+    set_optimizer_attribute(m, "TimeLimit", 10)
     #JuMP.set_silent(m)
     n_bp = length(price)
     @variable(m, var_price[1:n_bp] >= 0)

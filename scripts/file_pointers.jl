@@ -1,4 +1,4 @@
-SOURCE_DATA_DIR = "scripts/input_data"
+SOURCE_DATA_DIR = "/projects/emco4286/data/sienna_data/input_data"
 COST_FUNCTION_PATHS = joinpath(SOURCE_DATA_DIR, "Thermal", "cost_function_plots")
 cost_function_file = joinpath(SOURCE_DATA_DIR, "Thermal", "cost_function_params.json")
 
@@ -52,3 +52,7 @@ reg_up_adjustment_wind = joinpath(SOURCE_DATA_DIR, "Reserves", "regup_wind_adjus
 reg_dn_adjustment_wind = joinpath(SOURCE_DATA_DIR, "Reserves", "regdn_wind_adjustment.csv")
 nonspin_adjustment_solar = joinpath(SOURCE_DATA_DIR, "Reserves", "nonspin_solar_adjustment.csv")
 nonspin_adjustment_wind = joinpath(SOURCE_DATA_DIR, "Reserves", "nonspin_wind_adjustment.csv")
+
+# extracting_solar_forecasts.jl
+HA_sys_UC_experiment_json = joinpath(SOURCE_DATA_DIR, "HA_sys_UC_experiment.json")
+HA_sys_UC_experiment_h5 = joinpath(SOURCE_DATA_DIR, "HA_sys_UC_experiment_time_series_storage.h5")

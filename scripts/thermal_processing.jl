@@ -4,7 +4,7 @@ include("manual_data_entries.jl")
 include("incrementalpiecewise.jl")
 
 plant_metadata = CSV.read(thermal_mapping, DataFrame)
-sys = System("pre_thermal_sys.json")
+# sys = System("pre_thermal_sys.json")
 
 set_units_base_system!(sys, "NATURAL_UNITS")
 const MAKE_PLOTS = false
@@ -5165,6 +5165,7 @@ remove_component!(sys, gen)
 add_component!(sys, new_thermal)
 
 to_json(sys, "intermediate_sys.json", force = true)
+
 sys = System("intermediate_sys.json")
 
 gen = get_component(ThermalStandard, sys, "gen-497")
@@ -5921,6 +5922,9 @@ gen = get_component(ThermalStandard, sys, "gen-193")
 ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "GRSES_UNIT1")
 HSL = maximum(sced_data[!, "HSL"])
 LSL = median(sced_data[sced_data.LSL .> 1, :][!, "LSL"])
+
+# STOP_POINT_HERE
+
 new_thermal = make_thermal_gen_st(
     gen;
     name = "GRAHAM STG U1",
@@ -6039,8 +6043,8 @@ for th in get_components(ThermalGen, sys)
 end
 
 base_sys = sys
-to_json(base_sys, "intermediate_sys.json", force = true)
-base_sys = System("intermediate_sys.json")
+to_json(base_sys, "post_thermal_sys.json", force = true)
+base_sys = System("post_thermal_sys.json")
 set_units_base_system!(base_sys, "SYSTEM_BASE")
 
 # Writes a JSON with the CC constraints

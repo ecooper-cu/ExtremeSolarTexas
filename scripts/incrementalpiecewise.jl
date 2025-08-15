@@ -360,6 +360,6 @@ function build_thermal_cost(sced_data::DataFrame)
 end
 
 
-include("C:/Users/acasavan/GitHub_Repos/market-bid-cost-scratch/plot_cost_functions.jl")
+# include("C:/Users/acasavan/GitHub_Repos/market-bid-cost-scratch/plot_cost_functions.jl")
 
 

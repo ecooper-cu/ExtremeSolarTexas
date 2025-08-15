@@ -7,7 +7,7 @@ using Dates
 using Xpress
 using DataFrames
 
-system = system_new = System("RT_sys.json")
+system = system_new = System(joinpath(JSON_SAVE_DIR, "RT_sys.json"))
 #system_old = System("/Users/jdlara/Dropbox/Code/MultiStageCVAR/data/HA_sys.json")
 
 configure_logging(file_level = Logging.Info, console_level = Logging.Info)
@@ -80,4 +80,4 @@ for name in names(results.variable_values[:Pout__GenericBattery])
     set_reactive_power!(th, 0.0)
 end
 
-to_json(system, "RT_sys.json"; force = true)
+to_json(system, joinpath(JSON_SAVE_DIR, "RT_sys.json"); force = true)

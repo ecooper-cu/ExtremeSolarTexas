@@ -17,8 +17,6 @@ using Gurobi
 using JSON
 
 const PSY = PowerSystems
-const GENV = Gurobi.Env()
-
 
 function complete_lines_characteristic_impedance!(line_params, sys)
     z_c_data =

@@ -699,33 +699,96 @@ end
 
 
 
-to_json(sys, "intermediate_sys.json", force = true)
-sys = System("intermediate_sys.json")
+to_json(sys, joinpath(JSON_SAVE_DIR, "intermediate_sys.json"), force = true)
+# sys = System("intermediate_sys.json")
+
+#=
+sys_base = System(joinpath(JSON_SAVE_DIR, "intermediate_sys.json"))
+...
+to_json(sys_base, joinpath(JSON_SAVE_DIR, "intermediate_sys.json"); force = true)
+=#
 
 include("load_processing.jl")
+
+#=
+sys = System(joinpath(JSON_SAVE_DIR, "intermediate_sys.json"))
+...
+to_json(sys, joinpath(JSON_SAVE_DIR, "intermediate_sys.json"), force = true)
+=#
+
 include("wind_processing.jl")
+
+#=
+sys = System(joinpath(JSON_SAVE_DIR, "intermediate_sys.json"))
+...
+to_json(sys, joinpath(JSON_SAVE_DIR, "intermediate_sys.json"), force = true)
+=#
+
 include("hydro_processing.jl")
+
 to_json(sys, "pre_thermal_sys.json", force = true)
 
 sys = System("pre_thermal_sys.json")
+
+#=
+sys = System("pre_thermal_sys.json")
+...
+to_json(sys, joinpath(JSON_SAVE_DIR, "post_thermal_sys.json"), force = true)
+=#
+
 include("incrementalpiecewise.jl")
 include("thermal_processing.jl")
 
-
 configure_logging(file_level = Logging.Info, console_level = Logging.Info)
 
+# to_json(sys, "intermediate_sys.json", force = true)
+# to_json(sys, "post_thermal_sys.json", force = true)
 
-to_json(sys, "intermediate_sys.json", force = true)
-to_json(sys, "post_thermal_sys.json", force = true)
+sys = System(joinpath(JSON_SAVE_DIR, "post_thermal_sys.json"))
 
-# include("add_services.jl")
+#=
+system = System(joinpath(JSON_SAVE_DIR, "post_thermal_sys.json"))
+...
+to_json(system, joinpath(JSON_SAVE_DIR, "post_thermal_sys_w_services.json"); force = true)
+=#
+
+include("add_services.jl")
+
+sys = System(joinpath(JSON_SAVE_DIR, "post_thermal_sys_w_services.json"))
 
 write_lines_geo_data(sys, "line_coords_modified")
 write_gen_buses_geo_data(sys, "bus_gens_coords_modified")
 
-finalize_system(sys) 
+# finalize_system(sys)
+
+#=
+sys_base = System(joinpath(JSON_SAVE_DIR, "post_thermal_sys_w_services.json"))
+clear_time_series!(sys_base)
+...
+include("extracting_solar_forecasts.jl")
+...
+to_json(sys_base, joinpath(JSON_SAVE_DIR, "HA_sys.json"), force=true)
+=#
 
 include("make_hour_ahead_data.jl")
+
+#=
+sys_base = System(joinpath(JSON_SAVE_DIR, "post_thermal_sys_w_services.json"))
+clear_time_series!(sys_base)
+...
+sys_DA = deepcopy(sys_base)
+...
+to_json(sys_DA, joinpath(JSON_SAVE_DIR, "may_19_sys_DA.json"), force = true)
+...
+sys_solar_scenarios_31 = deepcopy(sys_base)
+...
+to_json(sys_solar_scenarios_31, joinpath(JSON_SAVE_DIR, "DA_sys_31_scenarios.json"), force = true)
+...
+sys_solar_scenarios_84 = deepcopy(sys_base)
+...
+to_json(sys_solar_scenarios_84, joinpath(JSON_SAVE_DIR, "DA_sys_84_scenarios.json"), force = true)
+
+=#
 include("make_day_ahead_data.jl")
 
 to_json(sys_DA, "sys_da.json", force = true)

@@ -5,7 +5,7 @@ include("file_pointers.jl")
 include("system_build_functions.jl")
 include("manual_data_entries.jl")
 
-sys_base = System("intermediate_sys_w_services.json")
+sys_base = System(joinpath(JSON_SAVE_DIR, "intermediate_sys_w_services.json"))
 clear_time_series!(sys_base)
 PSY.IS.assign_new_uuid!(sys_base)
 set_units_base_system!(sys_base, "SYSTEM_BASE")

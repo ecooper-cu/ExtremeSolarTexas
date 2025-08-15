@@ -17,7 +17,7 @@ mip_gap = 0.1
 
 
 # sys_RT = System("/scripts/jsons/HA_sys.json")
-sys_DA = System("sys_DA.json")
+sys_DA = System(joinpath(JSON_SAVE_DIR, "sys_DA.json"))
 
 optimizer = optimizer_with_attributes(
                 Xpress.Optimizer,

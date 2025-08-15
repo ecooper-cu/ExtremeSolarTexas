@@ -4,9 +4,9 @@ const PSY = PowerSystems
 include("file_pointers.jl")
 include("system_build_functions.jl")
 include("manual_data_entries.jl")
-include("add_services.jl")
+# include("add_services.jl")
 
-sys_base = System("intermediate_sys_w_services.json")
+sys_base = System(joinpath(JSON_SAVE_DIR, "post_thermal_sys_w_services.json"))
 # sys_base = deepcopy(system)
 clear_time_series!(sys_base)
 PSY.IS.assign_new_uuid!(sys_base)
@@ -208,7 +208,7 @@ for ((name, T), ts) in reserve_map
     add_time_series!(sys_base, res, forecast_data)
 end
 
-to_json(sys_base, "jsons/HA_sys.json", force=true)
+to_json(sys_base, joinpath(JSON_SAVE_DIR, "HA_sys.json"), force=true)
 
 ####################### Probabilistic Forecast for the Solar Area ##########################
 # area_forecast = h5open("input_data/Solar/ERCOT132.h5", "r") do file

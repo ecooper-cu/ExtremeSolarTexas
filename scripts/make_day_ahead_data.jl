@@ -1,4 +1,5 @@
 using PowerSystems
+using DataStructures
 const PSY = PowerSystems
 
 include("file_pointers.jl")
@@ -6,7 +7,7 @@ include("system_build_functions.jl")
 include("manual_data_entries.jl")
 
 
-sys_base = System("intermediate_sys_w_services.json")
+sys_base = System(joinpath(JSON_SAVE_DIR, "post_thermal_sys_w_services.json"))
 # sys_base = deepcopy(system)
 clear_time_series!(sys_base)
 PSY.IS.assign_new_uuid!(sys_base)
@@ -160,7 +161,7 @@ for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, Renew
         number = parse(Int, number_) - 1
         file_name = "solar$(number).h5"
         println(file_name)
-    elseif plant_name == "scripts/input_data/Solar/DA_time_series_files/Blue Bell Solar II.h5"
+    elseif plant_name == blue_bell_pointer
         file_name = "Blue Bell Solar II"
     else
         file_name = "$(plant_name).h5"
@@ -201,15 +202,15 @@ end
 #     @assert has_time_series(g)
 # end
 
-to_json(sys_DA, "may_19_sys_DA.json", force = true)
+to_json(sys_DA, joinpath(JSON_SAVE_DIR, "may_19_sys_DA.json"), force = true)
 
-to_json(sys_DA, "/Users/acasavan/EST_data/texas_data/DA_sys.json", force = true)
+# to_json(sys_DA, "/Users/acasavan/EST_data/texas_data/DA_sys.json", force = true)
 
 ############################ Add Scenario Data of UC #############################
 
 sys_solar_scenarios_31 = deepcopy(sys_base)
 PSY.IS.assign_new_uuid!(sys_solar_scenarios_31)
-ts_data = "C:/Users/acasavan/EST_data/texas_data/Trajectory forecasts -- 31 member 36 h horizon/Day ahead solar 31 trajectory mean forecasts"
+ts_data = scenario_31_members_pointer
 file_names = readdir(ts_data)
 for gen in get_components( x -> get_prime_mover_type(x) == PrimeMovers.PVe, RenewableDispatch, sys_solar_scenarios_31)
     !get_available(gen) && continue
@@ -253,14 +254,20 @@ for g in get_components(RenewableDispatch, sys_solar_scenarios_31)
     end
 end
 
-area_forecast = h5open("scripts/input_data/Solar/Trajectory forecasts -- 31 member 36 h horizon/day_ahead_ERCOT132_31_trajectories.h5", "r") do file
+area_forecast = h5open(area_forecast_36h_pointer, "r") do file
     return read(file, "Power")
 end
 
-hour_ahead_forecast = Dict{Dates.DateTime, Matrix{Float64}}()
+# hour_ahead_forecast = Dict{Dates.DateTime, Matrix{Float64}}()
+# for ix in 1:day_count
+#     hour_ahead_forecast[initial_time + (ix - 1) * da_interval] = area_forecast[ix, :, :]
+# end
+
+hour_ahead_forecast = SortedDict{Dates.DateTime, Matrix{Float64}}()
 for ix in 1:day_count
     hour_ahead_forecast[initial_time + (ix - 1) * da_interval] = area_forecast[ix, :, :]
 end
+
 
 scenario_forecast_data_31 = Scenarios(
     name = "solar_power",
@@ -270,12 +277,12 @@ scenario_forecast_data_31 = Scenarios(
 )
 add_time_series!(sys_solar_scenarios_31, get_component(Area, sys_solar_scenarios_31, "FarWest"), scenario_forecast_data_31)
 
-to_json(sys_solar_scenarios_31, "/Users/acasavan/EST_data/texas_data/DA_sys_31_scenarios.json", force = true)
+to_json(sys_solar_scenarios_31, joinpath(JSON_SAVE_DIR, "DA_sys_31_scenarios.json"), force = true)
 
 ############################ Add Scenario Data of UC #############################
 sys_solar_scenarios_84 = deepcopy(sys_base)
 PSY.IS.assign_new_uuid!(sys_solar_scenarios_84)
-ts_data = "C:/Users/acasavan/GitHub_Repos/ExtremeSolarTexas/scripts/input_data/Solar/Trajectory forecasts -- 84 member 30 horizon/Day ahead solar 84 trajectory mean forecasts/"
+ts_data = scenario_84_members_pointer
 file_names = readdir(ts_data)
 for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, RenewableGen, sys_solar_scenarios_84)
     !get_available(gen) && continue
@@ -303,7 +310,7 @@ for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, Renew
     @assert get_base_power(gen) <= get_base_power(gen)
     set_rating!(gen, peak_power / get_base_power(gen))
     normalized_power = power_output ./ maximum(power_output)
-    day_ahead_forecast = Dict{Dates.DateTime, Vector{Float64}}()
+    day_ahead_forecast = SortedDict{Dates.DateTime, Vector{Float64}}()
     for ix in 1:day_count
         day_ahead_forecast[initial_time + (ix - 1) * da_interval] = normalized_power[ix, :]
     end
@@ -325,12 +332,12 @@ for g in get_components(RenewableGen, sys_solar_scenarios_84)
     end
 end
 
-area_forecast_ = h5open("C:/Users/acasavan/GitHub_Repos/ExtremeSolarTexas/scripts/input_data/Solar/Trajectory forecasts -- 84 member 30 horizon/day_ahead_ERCOT132_84_trajectories.h5", "r") do file
+area_forecast_ = h5open(area_forecast_84h_pointer, "r") do file
     return read(file, "Power")
 end
 area_forecast = hcat(area_forecast_, area_forecast_[:, 1:6, :])
 
-hour_ahead_forecast = Dict{Dates.DateTime, Matrix{Float64}}()
+hour_ahead_forecast = SortedDict{Dates.DateTime, Matrix{Float64}}()
 for ix in 1:day_count
     hour_ahead_forecast[initial_time + (ix - 1) * da_interval] = area_forecast[ix, :, :]
 end
@@ -343,4 +350,4 @@ scenario_forecast_data_84 = Scenarios(
 )
 add_time_series!(sys_solar_scenarios_84, get_component(Area, sys_solar_scenarios_84, "FarWest"), scenario_forecast_data_84)
 
-to_json(sys_solar_scenarios_84, "/scripts/jsons/DA_sys_84_scenarios.json", force = true)
+to_json(sys_solar_scenarios_84, joinpath(JSON_SAVE_DIR, "DA_sys_84_scenarios.json"), force = true)

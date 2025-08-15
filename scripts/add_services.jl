@@ -9,7 +9,7 @@ include("file_pointers.jl")
 include("system_build_functions.jl")
 include("manual_data_entries.jl")
 
-system = System("intermediate_sys.json")
+system = System(joinpath(JSON_SAVE_DIR, "post_thermal_sys.json"))
 
 # system = sys_DA
 
@@ -111,6 +111,4 @@ for ((name, T, gens, time_frame), ts) in reserve_map
 end
 
 
-to_json(system, "intermediate_sys_w_services.json"; force = true)
-
-sys = System("intermediate_sys_w_services.json")
+to_json(system, joinpath(JSON_SAVE_DIR, "post_thermal_sys_w_services.json"); force = true)

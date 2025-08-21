@@ -4,7 +4,7 @@ include("manual_data_entries.jl")
 include("incrementalpiecewise.jl")
 
 plant_metadata = CSV.read(thermal_mapping, DataFrame)
-sys = System("pre_thermal_sys.json")
+sys = System(joinpath(JSON_SAVE_DIR,"pre_thermal_sys.json"))
 
 set_units_base_system!(sys, "NATURAL_UNITS")
 const MAKE_PLOTS = false

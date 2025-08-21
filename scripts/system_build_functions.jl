@@ -57,7 +57,7 @@ function write_lines_geo_data(sys, file_name)
         line = "LINESTRING ($(from_coords[1]) $(from_coords[2]), $(to_coords[1]) $(to_coords[2])"
         push!(df, [get_name(b), line, voltage])
     end
-    CSV.write("$file_name.csv", df)
+    CSV.write(joinpath(JSON_SAVE_DIR, "$file_name.csv"), df)
 end
 
 function write_gen_buses_geo_data(sys, file_name)
@@ -81,7 +81,7 @@ function write_gen_buses_geo_data(sys, file_name)
             ],
         )
     end
-    CSV.write("$file_name.csv", df_gens)
+    CSV.write(joinpath(JSON_SAVE_DIR, "$file_name.csv"), df_gens)
 end
 
 function get_line(sys, bus_name::String)
@@ -272,8 +272,9 @@ function add_transformer!(sys, new_arc)
             x = data.impedance[2],
             primary_shunt = 0.0,
             tap = 1.0,
-            # "rating" argument now needs to be per-unitized
-            rating = 2000.0/get_base_power(sys),
+            # "rating" argument now needs to be per-unitized ?
+            rating = 2000.0, 
+            # rating = 2000.0/get_base_power(sys),
             # new argument "base_power"
             base_power = get_base_power(sys),
         )

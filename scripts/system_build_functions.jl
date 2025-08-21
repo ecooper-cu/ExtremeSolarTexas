@@ -550,7 +550,7 @@ function make_wind_units(system, device::PSY.RenewableDispatch)
 end
 
 function make_hydro_units(system, device::PSY.HydroDispatch)
-    # set_available!(device, true)
+    set_available!(device, true)
     set_reactive_power!(device, 0.0)
     if occursin(r"gen", get_name(device))
         plant_name = strip(replace(get_name(get_bus(device)), r"[0-9]" => ""))
@@ -803,7 +803,7 @@ function make_thermal_gen(
     temp_gen = ThermalMultiStart(nothing)
     p_limits, q_limits, rating, base_power = _rescale_power(original_gen, LSL, HSL)
     set_name!(temp_gen, uppercase(replace(name, " " => "_")))
-    # set_available!(temp_gen, true)
+    set_available!(temp_gen, true)
     set_bus!(temp_gen, get_bus(original_gen))
     original_set_point = get_active_power(original_gen) / base_power
     set_point = original_set_point > p_limits.max ? p_limits.max : original_set_point
@@ -869,7 +869,7 @@ function make_thermal_gen_nuc(
     p_limits_, q_limits, rating, base_power = _rescale_power(original_gen, LSL, HSL)
     p_limits = (min = p_limits_.max * 0.95, max = p_limits_.max)
     set_name!(temp_gen, replace(name, " " => "_"))
-    # set_available!(temp_gen, true)
+    set_available!(temp_gen, true)
     set_status!(temp_gen, true)
     set_bus!(temp_gen, get_bus(original_gen))
     set_active_power!(temp_gen, p_limits.max)
@@ -936,7 +936,7 @@ function make_thermal_gen_st(
     temp_gen = ThermalMultiStart(nothing)
     p_limits, q_limits, rating, base_power = _rescale_power(original_gen, LSL, HSL)
     set_name!(temp_gen, uppercase(replace(name, " " => "_")))
-    # set_available!(temp_gen, true)
+    set_available!(temp_gen, true)
     set_status!(temp_gen, true)
     set_bus!(temp_gen, get_bus(original_gen))
     set_active_power!(temp_gen, p_limits.min)
@@ -1019,7 +1019,7 @@ function make_storage(original_gen::ThermalStandard; name)
     end
     set_base_power!(temp, base_power)
     set_name!(temp, replace(name, " " => "_"))
-    # set_available!(temp, true)
+    set_available!(temp, true)
     set_bus!(temp, get_bus(original_gen))
     set_prime_mover_type!(temp, PrimeMovers.BA)
     gen_max_active_power = original_gen.active_power_limits.max

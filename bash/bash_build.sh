@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --account=ucb678_asc1
-#SBATCH --partition=amilan128c
+#SBATCH --partition=amilan
 #SBATCH --job-name=build
 #SBATCH --output=out/build.%j.out
 #SBATCH --time=4:00:00

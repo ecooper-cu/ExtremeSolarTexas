@@ -2,7 +2,7 @@ SOURCE_DATA_DIR = "/projects/emco4286/data/sienna_data/input_data"
 COST_FUNCTION_PATHS = joinpath(SOURCE_DATA_DIR, "Thermal", "cost_function_plots")
 cost_function_file = joinpath(SOURCE_DATA_DIR, "Thermal", "cost_function_params.json")
 
-JSON_SAVE_DIR = joinpath(homedir(), "jsons2")
+JSON_SAVE_DIR = joinpath(homedir(), "jsons")
 
 # Original Data Files
 TAMU_matpower_file = joinpath(SOURCE_DATA_DIR, "ACTIVSg2000", "ACTIVSg2000.m")

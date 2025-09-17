@@ -53,6 +53,10 @@ set_device_model!(template_uc, HydroDispatch, HydroDispatchRunOfRiver)
 initial_date = "2018-08-01"
 start_time =DateTime(string(initial_date,"T00:00:00"))
 model = DecisionModel(template_uc, sys; name = "UC", optimizer = solver, horizon = Hour(24), calculate_conflict = true)
+
+cons = decision_model.internal.container.constraints
+cons[InfrastructureSystems.Optimization.ConstraintKey{ActivePowerVariableLimitsConstraint, ThermalStandard}("lb")]
+
 models = SimulationModels(; decision_models = [model])
 
 steps_sim    = 1
